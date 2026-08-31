@@ -7,7 +7,7 @@ Env: CARTESIA_API_KEY, DATABRICKS_HOST, DATABRICKS_TOKEN, GENIE_SPACE_ID
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from databricks.sdk import WorkspaceClient
-import requests, os, base64, logging, time
+import requests, os, base64, logging, time, subprocess, json, tempfile
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -78,23 +78,47 @@ def tts_cartesia():
         "output_format": {"container": "wav", "encoding": "pcm_s16le", "sample_rate": 44100},
         "generation_config": {"speed": 1, "volume": 1}
     }
+    # Use curl via subprocess — Python's LibreSSL 2.8.3 hangs on Cartesia TLS, curl (SecureTransport) works
     try:
-        r = requests.post("https://api.cartesia.ai/tts/bytes",
-            headers={"X-API-Key": CARTESIA_KEY, "Cartesia-Version": "2026-08-14", "Content-Type": "application/json"},
-            json=payload, timeout=20)
-        if r.status_code == 429:
-            log.warning("cartesia tts 429")
+        import tempfile
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as out:
+            out_path = out.name
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".txt") as hdr:
+            hdr_path = hdr.name
+        payload_json = json.dumps(payload)
+        cmd = ["curl", "-s", "--max-time", "25", "-D", hdr_path, "-o", out_path, "-X", "POST", "https://api.cartesia.ai/tts/bytes",
+               "-H", f"X-API-Key: {CARTESIA_KEY}", "-H", "Cartesia-Version: 2026-08-14", "-H", "Content-Type: application/json",
+               "-d", payload_json]
+        proc = subprocess.run(cmd, timeout=26, capture_output=True, text=True)
+        # Read header for status
+        hdr_text = open(hdr_path).read() if os.path.exists(hdr_path) else ""
+        status = 200
+        if "HTTP/" in hdr_text:
+            try: status = int(hdr_text.split("HTTP/")[1].split(" ")[1])
+            except: status = 200
+        if proc.returncode != 0 or status == 429:
+            log.warning(f"cartesia tts curl status {status} rc {proc.returncode}")
             return jsonify({"error": "Voice engine busy — try again", "retry": True}), 429
-        if r.status_code != 200:
-            log.error(f"cartesia tts {r.status_code} {r.text[:300]}")
-            return jsonify({"error": r.text[:500]}), r.status_code
-        log.info(f"tts ok chars={len(text)} bytes={len(r.content)}")
-        return r.content, 200, {"Content-Type": "audio/wav", "Cache-Control": "public, max-age=86400"}
-    except requests.Timeout:
+        if status != 200:
+            err = open(out_path, "rb").read().decode(errors="ignore")[:500] if os.path.exists(out_path) else hdr_text[:500]
+            log.error(f"cartesia tts {status} {err[:300]}")
+            return jsonify({"error": err[:500]}), status
+        data = open(out_path, "rb").read() if os.path.exists(out_path) else b""
+        if len(data) < 1000:
+            return jsonify({"error": "Voice empty — try again"}), 500
+        log.info(f"tts ok chars={len(text)} bytes={len(data)} via curl")
+        return data, 200, {"Content-Type": "audio/wav", "Cache-Control": "public, max-age=86400"}
+    except subprocess.TimeoutExpired:
         return jsonify({"error": "Voice timeout — try again", "retry": True}), 504
     except Exception as e:
         log.error(f"tts error {e}")
         return jsonify({"error": str(e)[:500]}), 500
+    finally:
+        try:
+            import os as _os
+            _os.unlink(out_path)
+            _os.unlink(hdr_path)
+        except: pass
 
 @app.post("/api/tts/rumik")
 def tts_rumik():
