@@ -118,8 +118,8 @@ export function useVoice() {
         return;
       }
 
-      // Genie
-      const genie = await apiPost<{ answer?: string; error?: string }>('/api/genie', { question: text }, { retries: 1, timeout: 25000 });
+      // Genie — can be slow on cold start (30s)
+      const genie = await apiPost<{ answer?: string; error?: string }>('/api/genie', { question: text }, { retries: 1, timeout: 45000 });
       const ans = (genie.answer || genie.error || '').trim();
       if (!ans) throw new Error('No answer — try rephrasing');
       setAnswer(ans);
