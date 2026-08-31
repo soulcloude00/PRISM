@@ -3,15 +3,12 @@
   "version": "1.0.0",
   "main": "node_modules/expo/AppEntry.js",
   "scripts": {
-    "start": "expo start --dev-client",
+    "start": "expo start",
     "android": "expo run:android",
-    "ios": "expo run:ios",
-    "eject": "expo eject"
+    "ios": "expo run:ios"
   },
   "dependencies": {
-    "@expo/metro-runtime": "~3.2.3",
     "expo": "~51.0.28",
-    "expo-audio": "~0.1.0",
     "expo-av": "~14.0.7",
     "expo-camera": "~15.0.16",
     "expo-constants": "~16.0.2",
@@ -24,17 +21,11 @@
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "react-native": "0.74.5",
-    "react-native-web": "~0.19.10"
+    "react-native-web": "~0.19.10",
+    "@expo/metro-runtime": "~3.2.3"
   },
   "devDependencies": {
-    "typescript": "^5.3.3",
+    "typescript": "~5.3.3",
     "@types/react": "~18.2.79"
-  },
-  "expo": {
-    "install": {
-      "exclude": [
-        "react-native"
-      ]
-    }
   }
 }

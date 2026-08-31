@@ -6,8 +6,6 @@
     "orientation": "portrait",
     "scheme": "prism",
     "userInterfaceStyle": "dark",
-    "newArchEnabled": false,
-    "jsEngine": "hermes",
     "splash": { "backgroundColor": "#0a0a0a", "resizeMode": "contain" },
     "assetBundlePatterns": ["**/*"],
     "ios": { "supportsTablet": true, "bundleIdentifier": "com.prism.expo" },
@@ -21,8 +19,6 @@
       ["expo-camera", { "cameraPermission": "Allow PRISM to scan notes." }],
       ["expo-notifications", { "color": "#818cf8" }]
     ],
-    "extra": { "apiUrl": "http://192.168.68.119:8001" },
-    "updates": { "enabled": false },
-    "runtimeVersion": "1.0.0"
+    "extra": { "apiUrl": "http://192.168.68.119:8001" }
   }
 }
