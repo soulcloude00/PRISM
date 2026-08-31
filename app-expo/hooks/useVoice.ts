@@ -27,6 +27,10 @@ export function useVoice() {
     setTranscript('');
     try {
       if (Platform.OS === 'web') {
+        // Product: http on LAN blocks mic — detect and guide
+        if (typeof window !== 'undefined' && window.isSecureContext === false) {
+          throw new Error('Microphone needs HTTPS. Open via Expo Go (scan QR) or use tunnel — http on LAN is blocked by browser.');
+        }
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
         const rec = new MediaRecorder(stream, { mimeType: 'audio/webm;codecs=opus' });
         const chunks: Blob[] = [];
@@ -51,7 +55,14 @@ export function useVoice() {
       setState('listening');
       timerRef.current = setTimeout(() => stop(), 5000);
     } catch (e: any) {
-      setError(e.message || 'Mic failed — allow microphone');
+      const msg = e.message || '';
+      if (msg.includes('NotAllowedError') || msg.includes('Permission denied')) {
+        setError('Microphone blocked — allow access in browser settings and try again.');
+      } else if (msg.includes('HTTPS')) {
+        setError(msg);
+      } else {
+        setError('Microphone failed — try Expo Go app for best voice.');
+      }
       setState('error');
     }
   }
