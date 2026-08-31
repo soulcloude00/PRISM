@@ -6,7 +6,7 @@ let cacheWavImpl: (name: string, b64: string) => Promise<string> = async () => '
 try {
   // Only load on native — web will throw, we catch
   const SQLite = require('expo-sqlite');
-  const FileSystem = require('expo-file-system');
+  const FileSystem = require('expo-file-system/legacy');
   const db = SQLite.openDatabaseSync('prism.db');
   db.execSync('CREATE TABLE IF NOT EXISTS genie_cache (q TEXT PRIMARY KEY, answer TEXT, ts INTEGER);');
   getCachedImpl = async (q: string) => {

@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 import { Platform } from 'react-native';
 import { Audio } from 'expo-av';
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
 import { apiPost, apiTTS, API_URL } from '../services/api';
 import { getCached, setCached } from '../services/cache';
 
