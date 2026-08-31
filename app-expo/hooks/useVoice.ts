@@ -72,6 +72,8 @@ export function useVoice() {
     if (!recRef.current && !isWeb) return;
     clearTimeout(timerRef.current);
     setState('processing');
+    const { log } = await import('../services/logger');
+    log(`stop: isWeb=${!!isWeb} native=${!!recRef.current}`);
     try {
       let b64 = '';
       if (isWeb && webRecRef.current) {
@@ -83,6 +85,7 @@ export function useVoice() {
         });
         stream.getTracks().forEach(t => t.stop());
         const blob = new Blob(chunks, { type: 'audio/webm;codecs=opus' });
+        log(`web blob ${blob.size}`);
         if (blob.size < 800) throw new Error("We didn't catch that — speak a bit louder");
         b64 = await new Promise<string>((res, rej) => {
           const r = new FileReader();
@@ -90,28 +93,36 @@ export function useVoice() {
           r.onerror = () => rej(new Error('Audio read failed'));
           r.readAsDataURL(blob);
         });
+        log(`web b64 ${b64.length}`);
         if (b64.length < 800) throw new Error("We didn't catch that — try again");
       } else if (recRef.current) {
         const rec = recRef.current;
         recRef.current = null;
         await rec.stopAndUnloadAsync();
         const uri = rec.getURI();
+        log(`native uri ${uri}`);
         if (!uri) throw new Error('No audio captured — tap again and speak 1-2s');
         const stat = await FileSystem.getInfoAsync(uri);
+        log(`native stat ${JSON.stringify(stat)}`);
         if (!stat.exists || (stat as any).size < 800) throw new Error("We didn't catch that — speak a bit louder");
         b64 = await FileSystem.readAsStringAsync(uri, { encoding: FileSystem.EncodingType.Base64 });
+        log(`native b64 ${b64.length}`);
         if (b64.length < 800) throw new Error("We didn't catch that — try again");
       }
 
       // STT
+      log(`STT POST ${b64.length} to ${API_URL}`);
       const stt = await apiPost<{ text?: string; error?: string }>('/api/stt/cartesia', { audio_base64: b64 }, { retries: 1, timeout: 20000 });
+      log(`STT res ${JSON.stringify(stt).slice(0,120)}`);
       const text = (stt.text || '').trim();
       if (!text || text.includes("couldn't hear")) throw new Error(text || "We didn't catch that");
       setTranscript(text);
 
       // Check cache before Genie
+      log(`Genie cache check "${text.slice(0,30)}"`);
       const cached = await getCached(text);
       if (cached) {
+        log(`Genie cache hit`);
         setAnswer(cached);
         await speak(cached);
         setState('speaking');
@@ -119,7 +130,9 @@ export function useVoice() {
       }
 
       // Genie — can be slow on cold start (30s)
+      log(`Genie POST "${text.slice(0,30)}"`);
       const genie = await apiPost<{ answer?: string; error?: string }>('/api/genie', { question: text }, { retries: 1, timeout: 45000 });
+      log(`Genie res ${JSON.stringify(genie).slice(0,120)}`);
       const ans = (genie.answer || genie.error || '').trim();
       if (!ans) throw new Error('No answer — try rephrasing');
       setAnswer(ans);
@@ -127,6 +140,8 @@ export function useVoice() {
       await speak(ans);
       setState('speaking');
     } catch (e: any) {
+      const { log: logErr } = await import('../services/logger');
+      logErr(`ERR ${e.message} name=${e.name} status=${e.status}`);
       let msg = e.message || 'Something went wrong';
       if (msg.toLowerCase().includes('aborted') || e.name === 'AbortError') {
         msg = 'Taking too long — check WiFi and try again.';
