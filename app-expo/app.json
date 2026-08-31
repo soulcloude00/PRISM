@@ -6,6 +6,8 @@
     "orientation": "portrait",
     "scheme": "prism",
     "userInterfaceStyle": "dark",
+    "newArchEnabled": false,
+    "jsEngine": "hermes",
     "splash": { "backgroundColor": "#0a0a0a", "resizeMode": "contain" },
     "assetBundlePatterns": ["**/*"],
     "ios": { "supportsTablet": true, "bundleIdentifier": "com.prism.expo" },
