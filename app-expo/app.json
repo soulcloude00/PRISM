@@ -4,7 +4,6 @@
     "slug": "prism-expo",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
     "scheme": "prism",
     "userInterfaceStyle": "dark",
     "splash": { "backgroundColor": "#0a0a0a", "resizeMode": "contain" },
