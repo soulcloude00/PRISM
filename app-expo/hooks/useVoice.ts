@@ -110,9 +110,9 @@ export function useVoice() {
         if (b64.length < 800) throw new Error("We didn't catch that — try again");
       }
 
-      // STT
+      // STT — m4a 50k, needs 30s on LibreSSL
       log(`STT POST ${b64.length} to ${API_URL}`);
-      const stt = await apiPost<{ text?: string; error?: string }>('/api/stt/cartesia', { audio_base64: b64 }, { retries: 1, timeout: 20000 });
+      const stt = await apiPost<{ text?: string; error?: string }>('/api/stt/cartesia', { audio_base64: b64 }, { retries: 1, timeout: 30000 });
       log(`STT res ${JSON.stringify(stt).slice(0,120)}`);
       const text = (stt.text || '').trim();
       if (!text || text.includes("couldn't hear")) throw new Error(text || "We didn't catch that");

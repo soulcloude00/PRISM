@@ -136,14 +136,21 @@ def stt_cartesia():
         return jsonify({"error": "Invalid audio encoding"}), 400
     if len(audio_bytes) < 500:
         return jsonify({"error": "Audio too short — speak for 1-2 seconds"}), 400
+    # Detect m4a (ftyp) vs wav (RIFF) vs webm
     content_type = "audio/webm"
+    ext = "webm"
     if audio_bytes[:4] == b'RIFF':
-        content_type = "audio/wav"
-    files = {"file": (f"recording.{content_type.split('/')[-1]}", audio_bytes, content_type)}
+        content_type = "audio/wav"; ext = "wav"
+    elif len(audio_bytes) > 8 and audio_bytes[4:8] == b'ftyp':
+        content_type = "audio/m4a"; ext = "m4a"
+    elif audio_bytes[:4] == b'\x1a\x45\xdf\xa3':  # webm EBML
+        content_type = "audio/webm"; ext = "webm"
+    log.info(f"stt recv {len(audio_bytes)} bytes as {content_type}")
+    files = {"file": (f"recording.{ext}", audio_bytes, content_type)}
     data = {"model": "ink-whisper", "language": "en", "timestamp_granularities[]": "word"}
     headers = {"Cartesia-Version": "2026-08-14", "Authorization": f"Bearer {CARTESIA_KEY}"}
     try:
-        r = requests.post("https://api.cartesia.ai/stt", files=files, data=data, headers=headers, timeout=20)
+        r = requests.post("https://api.cartesia.ai/stt", files=files, data=data, headers=headers, timeout=30)
         if r.status_code == 429:
             return jsonify({"error": "High demand — try again in 2s", "retry": True}), 429
         if r.status_code != 200:
