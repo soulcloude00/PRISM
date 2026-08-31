@@ -127,10 +127,12 @@ export function useVoice() {
       await speak(ans);
       setState('speaking');
     } catch (e: any) {
-      const msg = e.message || 'Something went wrong';
+      let msg = e.message || 'Something went wrong';
+      if (msg.toLowerCase().includes('aborted') || e.name === 'AbortError') {
+        msg = 'Taking too long — check WiFi and try again.';
+      }
       setError(msg);
       setState('error');
-      // auto-reset error to idle after 3s
       setTimeout(() => setState('idle'), 3000);
     }
   }
