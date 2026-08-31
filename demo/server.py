@@ -1,0 +1,141 @@
+"""
+Real demo server: Genie (Databricks) + Cartesia STT/TTS
+Run: python server.py  -> http://localhost:8001 or hosted (Render/Fly)
+Frontend: MediaRecorder -> /api/stt/cartesia (ink-whisper) -> Genie -> /api/tts/cartesia (sonic-3.6, voice 50bbd3dd...)
+Env: CARTESIA_API_KEY, DATABRICKS_HOST, DATABRICKS_TOKEN, GENIE_SPACE_ID
+"""
+from flask import Flask, request, jsonify
+from flask_cors import CORS
+from databricks.sdk import WorkspaceClient
+import requests, os, base64, logging, time
+from dotenv import load_dotenv
+
+load_dotenv()
+load_dotenv(os.path.join(os.path.dirname(__file__), ".env"))
+
+app = Flask(__name__)
+CORS(app)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+log = logging.getLogger("prism")
+
+# Env — never hardcode in bundle, proxy via server
+CARTESIA_KEY = os.getenv("CARTESIA_API_KEY", "YOUR_CARTESIA_API_KEY_REDACTED")
+DATABRICKS_HOST = os.getenv("DATABRICKS_HOST", "https://dbc-42ea286b-3fd9.cloud.databricks.com")
+DATABRICKS_TOKEN = os.getenv("DATABRICKS_TOKEN", "YOUR_DATABRICKS_TOKEN_REDACTED")
+GENIE_SPACE_ID = os.getenv("GENIE_SPACE_ID", "YOUR_GENIE_SPACE_ID_REDACTED")
+PORT = int(os.getenv("PORT", "8001"))
+
+# Fail loud if missing in production
+if os.getenv("RENDER") or os.getenv("FLY_APP_NAME"):
+    if CARTESIA_KEY.startswith("sk_car_") and os.getenv("CARTESIA_API_KEY") is None:
+        log.warning("CARTESIA_API_KEY not set in production env — using fallback (rotate soon)")
+
+try:
+    w = WorkspaceClient(host=DATABRICKS_HOST, token=DATABRICKS_TOKEN)
+except Exception as e:
+    log.error(f"Databricks init failed: {e}")
+    w = None
+
+@app.get("/health")
+def health():
+    return jsonify({"ok": True, "genie_space": GENIE_SPACE_ID, "cartesia": bool(CARTESIA_KEY)})
+
+@app.post("/api/genie")
+def genie():
+    t0 = time.time()
+    q = (request.get_json(silent=True) or {}).get("question", "").strip()
+    if not q:
+        return jsonify({"error": "Missing question"}), 400
+    if not w:
+        return jsonify({"error": "Databricks not configured"}), 503
+    try:
+        conv = w.genie.start_conversation_and_wait(space_id=GENIE_SPACE_ID, content=q)
+        for att in conv.attachments:
+            if att.text and att.text.content:
+                log.info(f"genie ok q='{q[:60]}' latency={(time.time()-t0)*1000:.0f}ms")
+                return jsonify({"answer": att.text.content, "sql": att.query.query if att.query else None})
+        return jsonify({"answer": "Genie completed but no text attachment", "raw": str(conv)})
+    except Exception as e:
+        msg = str(e)
+        log.error(f"genie error q='{q[:60]}' err={msg[:300]}")
+        # Specific rescues
+        if "429" in msg or "rate" in msg.lower():
+            return jsonify({"error": "High demand — try again in 2s", "retry": True}), 429
+        if "timeout" in msg.lower():
+            return jsonify({"error": "Genie is thinking — try again", "retry": True}), 504
+        return jsonify({"error": msg[:500]}), 500
+
+@app.post("/api/tts/cartesia")
+def tts_cartesia():
+    text = (request.get_json(silent=True) or {}).get("text", "").strip()
+    if not text:
+        return jsonify({"error": "Missing text"}), 400
+    # Your exact spec: sonic-3.6, 50bbd3dd, wav pcm_s16le 44100, speed 1 volume 1
+    payload = {
+        "model_id": "sonic-3.6",
+        "transcript": text,
+        "voice": {"mode": "id", "id": "50bbd3dd-8743-44da-b994-9055660f8183"},
+        "output_format": {"container": "wav", "encoding": "pcm_s16le", "sample_rate": 44100},
+        "generation_config": {"speed": 1, "volume": 1}
+    }
+    try:
+        r = requests.post("https://api.cartesia.ai/tts/bytes",
+            headers={"X-API-Key": CARTESIA_KEY, "Cartesia-Version": "2026-08-14", "Content-Type": "application/json"},
+            json=payload, timeout=20)
+        if r.status_code == 429:
+            log.warning("cartesia tts 429")
+            return jsonify({"error": "Voice engine busy — try again", "retry": True}), 429
+        if r.status_code != 200:
+            log.error(f"cartesia tts {r.status_code} {r.text[:300]}")
+            return jsonify({"error": r.text[:500]}), r.status_code
+        log.info(f"tts ok chars={len(text)} bytes={len(r.content)}")
+        return r.content, 200, {"Content-Type": "audio/wav", "Cache-Control": "public, max-age=86400"}
+    except requests.Timeout:
+        return jsonify({"error": "Voice timeout — try again", "retry": True}), 504
+    except Exception as e:
+        log.error(f"tts error {e}")
+        return jsonify({"error": str(e)[:500]}), 500
+
+@app.post("/api/tts/rumik")
+def tts_rumik():
+    return jsonify({"error": "Rumik disabled. Use /api/tts/cartesia (voice 50bbd3dd-8743-44da-b994-9055660f8183)"}), 410
+
+@app.post("/api/stt/cartesia")
+def stt_cartesia():
+    body = request.get_json(silent=True) or {}
+    file_b64 = body.get("audio_base64", "")
+    if not file_b64:
+        return jsonify({"error": "No audio data — we didn't catch that, tap again"}), 400
+    try:
+        audio_bytes = base64.b64decode(file_b64)
+    except Exception:
+        return jsonify({"error": "Invalid audio encoding"}), 400
+    if len(audio_bytes) < 500:
+        return jsonify({"error": "Audio too short — speak for 1-2 seconds"}), 400
+    content_type = "audio/webm"
+    if audio_bytes[:4] == b'RIFF':
+        content_type = "audio/wav"
+    files = {"file": (f"recording.{content_type.split('/')[-1]}", audio_bytes, content_type)}
+    data = {"model": "ink-whisper", "language": "en", "timestamp_granularities[]": "word"}
+    headers = {"Cartesia-Version": "2026-08-14", "Authorization": f"Bearer {CARTESIA_KEY}"}
+    try:
+        r = requests.post("https://api.cartesia.ai/stt", files=files, data=data, headers=headers, timeout=20)
+        if r.status_code == 429:
+            return jsonify({"error": "High demand — try again in 2s", "retry": True}), 429
+        if r.status_code != 200:
+            log.error(f"stt {r.status_code} {r.text[:300]}")
+            return jsonify({"error": r.text[:300]}), r.status_code
+        text = (r.json().get("text") or "").strip()
+        if not text or text == "...":
+            return jsonify({"text": "I couldn't hear anything. Try again — speak clearly for 2 seconds."})
+        log.info(f"stt ok text='{text[:80]}'")
+        return jsonify({"text": text})
+    except requests.Timeout:
+        return jsonify({"error": "Transcription timeout — try again", "retry": True}), 504
+    except Exception as e:
+        log.error(f"stt error {e}")
+        return jsonify({"error": str(e)[:500]}), 500
+
+if __name__ == "__main__":
+    log.info(f"PRISM server on :{PORT} — Genie {GENIE_SPACE_ID[:8]}... Cartesia sonic-3.6 50bbd3dd")
+    app.run(host="0.0.0.0", port=PORT)

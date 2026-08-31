@@ -1,0 +1,27 @@
+{
+  "expo": {
+    "name": "PRISM",
+    "slug": "prism-expo",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "scheme": "prism",
+    "userInterfaceStyle": "dark",
+    "splash": { "backgroundColor": "#0a0a0a", "resizeMode": "contain" },
+    "assetBundlePatterns": ["**/*"],
+    "ios": { "supportsTablet": true, "bundleIdentifier": "com.prism.expo" },
+    "android": {
+      "package": "com.prism.expo",
+      "adaptiveIcon": { "backgroundColor": "#0a0a0a" },
+      "permissions": ["android.permission.RECORD_AUDIO", "android.permission.CAMERA", "android.permission.POST_NOTIFICATIONS"]
+    },
+    "plugins": [
+      ["expo-av", { "microphonePermission": "Allow PRISM to listen for your voice questions." }],
+      ["expo-camera", { "cameraPermission": "Allow PRISM to scan notes." }],
+      ["expo-notifications", { "color": "#818cf8" }]
+    ],
+    "extra": { "apiUrl": "http://192.168.68.119:8001", "eas": { "projectId": "REPLACE_WITH_EAS_PROJECT_ID" } },
+    "updates": { "url": "https://u.expo.dev/REPLACE_WITH_EAS_PROJECT_ID" },
+    "runtimeVersion": { "policy": "appVersion" }
+  }
+}

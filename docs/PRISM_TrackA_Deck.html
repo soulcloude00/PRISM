@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"/>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Inter',system-ui,sans-serif}
+body{background:#0a0a0a;color:#111}
+.slide{width:1280px;height:720px;background:#fff;margin:20px auto;padding:48px 56px;position:relative;page-break-after:always;border:1px solid #e5e5e5}
+.accent{color:#FF3621}
+.label{font-size:11px;letter-spacing:0.18em;font-weight:700;color:#FF3621;text-transform:uppercase;margin-bottom:12px}
+h1{font-size:52px;line-height:0.95;letter-spacing:-0.04em;font-weight:900}
+h2{font-size:36px;letter-spacing:-0.03em;font-weight:800;line-height:1.1}
+h3{font-size:18px;font-weight:700;margin-bottom:8px}
+p,li{font-size:14px;line-height:1.5;color:#333}
+ul{margin-left:18px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:32px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px}
+.card{border:1px solid #eee;padding:16px;border-radius:12px;background:#fafafa}
+.tag{display:inline-block;font-size:11px;font-weight:700;padding:6px 10px;border-radius:999px;background:#111;color:#fff;margin-right:6px}
+.kpi{font-size:32px;font-weight:900;letter-spacing:-0.03em}
+.small{font-size:12px;color:#666;line-height:1.4}
+.bar{height:4px;background:#FF3621;width:64px;margin:12px 0 16px 0}
+.arch{font-family:ui-monospace,monospace;font-size:11px;background:#0a0a0a;color:#00ff88;padding:16px;border-radius:10px;line-height:1.6}
+</style></head>
+<body>
+
+<!-- SLIDE 1 COVER -->
+<div class="slide">
+<div class="label">Track A — Real-World Campus Problem Solver · Genie-Powered Campus Intelligence</div>
+<h1>PRISM<span class="accent">.</span><br/>Placement & Lab<br/>Resource Twin</h1>
+<div class="bar"></div>
+<p style="font-size:18px;max-width:640px">A constraint-aware Agentic Lakehouse that turns <b>“Am I placement-ready?”</b> into a data-backed answer — via <b>Genie at the core</b>.</p>
+<div style="margin-top:28px">
+<span class="tag">Team Ward Zero</span><span class="tag" style="background:#FF3621">BMSCE Edition</span><span class="tag" style="background:#fff;color:#111;border:1px solid #ddd">Databricks Free Edition</span>
+</div>
+<p class="small" style="margin-top:28px">Bengaluru Tech Week 2026 · Idea Submission · 29 Aug 2026 11:59 PM · Built on: Lakeflow · Lakebase · Agent Bricks · Genie Code · Vector Search · MLflow 3.0</p>
+<div style="position:absolute;right:56px;bottom:48px;text-align:right">
+<p class="small">Research-backed: SubgraphRAG (arXiv 2410.20724) + NodeRAG + 2026 Campus Digital Twin GraphRAG (Int. J. Digital Earth)</p>
+</div>
+</div>
+
+<!-- SLIDE 2 PROBLEM -->
+<div class="slide">
+<div class="label">Problem — Why this wins usefulness test</div>
+<h2>Campus knowledge is<br/>fractured & not conversational</h2>
+<div class="bar"></div>
+<div class="grid3" style="margin-top:20px">
+<div class="card"><h3>👨‍🎓 Student</h3><p>“Which 2 skills/labs block me from Infosys?” <br/><span class="small">No link between LMS, labs, JDs, alumni paths. 120+ JDs manually scanned.</span></p></div>
+<div class="card"><h3>🏢 Placement Cell</h3><p>Can’t predict at-risk early<br/><span class="small">Attendance + CGPA in sheets, no skill-graph forecasting. Interventions too late.</span></p></div>
+<div class="card"><h3>🔬 Lab Admin</h3><p>35% lab/GPU wastage<br/><span class="small">Bookings in registers, no energy/utilisation twin. Free labs ≠ found.</span></p></div>
+</div>
+<p style="margin-top:20px;background:#FFF3F0;border-left:4px solid #FF3621;padding:12px 16px;font-size:13px"><b>Gap:</b> No governed, conversational layer that enforces real constraints (prerequisites, lab hours, GPU, eligibility) — static dashboards don’t answer “what should I do next?”</p>
+<p class="small" style="margin-top:12px">Refs: 190-table sharding problem from OneTrust Genie Hackathon (Databricks Blog July 9 2026) · 77% Genie Code success vs 32% baseline</p>
+</div>
+
+<!-- SLIDE 3 SOLUTION -->
+<div class="slide">
+<div class="label">Solution — PRISM in one line</div>
+<h2>One Genie. One Graph.<br/>From question to action.</h2>
+<div class="bar"></div>
+<div class="grid2" style="margin-top:16px">
+<div>
+<h3 style="color:#FF3621">What it is</h3>
+<p>A Lakehouse that unifies 6 campus datasets into a <b>Skills Knowledge Graph</b> with <b>constraint-aware GraphRAG</b> — only feasible skill→course→lab→JD paths are retrieved.</p>
+<ul style="margin-top:10px">
+<li><b>Supervisor</b> routes across 3 focused Genie Agents (sharded for accuracy)</li>
+<li><b>Cited answers</b> + AI/BI dashboard overlay (student / officer / admin views)</li>
+<li><b>Feasible only:</b> respects prerequisites, lab hours, GPU, eligibility</li>
+</ul>
+</div>
+<div>
+<div class="card"><h3>3 Pillars</h3>
+<p><b>1. Graph</b> — SubgraphRAG lightweight MLP retriever, NodeRAG heterograph (SOTA without fine-tuning)<br/><b>2. Constraints</b> — Graph retrieval enforces physical/temporal constraints (2026 campus twin paper)<br/><b>3. Conversational</b> — Genie IS the product, not a chatbot add-on</p></div>
+<p class="small" style="margin-top:10px">Complete journey: <i>“At-risk for Infosys?” → graph reasoning → 2 skills + 2 labs free tonight + alumni path — all cited.</i></p>
+</div>
+</div>
+</div>
+
+<!-- SLIDE 4 ARCHITECTURE -->
+<div class="slide">
+<div class="label">Architecture — Built 100% on Free Edition</div>
+<h2>Lakehouse → Graph → Genie → Action</h2>
+<div class="bar"></div>
+<div class="arch" style="margin-top:16px">
+Open Data + Synthetic Campus Data (120k rows)<br/>
+&nbsp;&nbsp;↓ Lakeflow Designer (visual pipelines) → Delta Lake Bronze/Silver/Gold → Unity Catalog (governance + lineage)<br/>
+&nbsp;&nbsp;↓ Lakebase (Postgres) ← live student queries / lab bookings (transactional agent memory)<br/>
+&nbsp;&nbsp;↓ Vector Search (Hybrid) + Knowledge Graph → SubgraphRAG / NodeRAG (GraphRAG)<br/>
+&nbsp;&nbsp;↓ Agent Bricks: Supervisor → [ Information Extraction (JDs→skills) | Retrieval (cited) | Forecasting (risk) ]<br/>
+&nbsp;&nbsp;↓ Genie Agents x3 (sharded: Skills | Labs | Academic) → Genie Conversation APIs + MCP → AI/BI Dashboard overlay<br/>
+&nbsp;&nbsp;↓ MLflow 3.0 (LLM judges: groundedness/accuracy) + Model Serving + Databricks Apps
+</div>
+<div class="grid3" style="margin-top:16px">
+<div class="card"><p class="small"><b>Genie Code</b> auto-generates & debugs pipelines/notebooks. ZeroOps ready.</p></div>
+<div class="card"><p class="small"><b>Lakebase</b> = operational DB for agents — no silo, direct on lakehouse.</p></div>
+<div class="card"><p class="small"><b>Agent Bricks</b> = declarative agents, auto-evals via TAO/ALHF.</p></div>
+</div>
+</div>
+
+<!-- SLIDE 5 GENIE CORE -->
+<div class="slide">
+<div class="label">How Genie powers the core experience</div>
+<h2>Genie is not a feature.<br/>Genie is the product.</h2>
+<div class="bar"></div>
+<div class="grid2" style="margin-top:16px">
+<div class="card" style="background:#0a0a0a;color:#fff"><h3 style="color:#00ff88">Killer Demo Q1 (Student)</h3><p style="color:#ccc">“Am I ready for Infosys? Which 2 labs tonight fix my gap?”</p><p class="small" style="color:#888">Genie shards → Skills Agent (gap) + Lab Agent (free GPU labs 7-10pm, constraint-checked) → Supervisor stitches cited answer + map</p><div style="margin-top:10px;background:#1a1a1a;padding:10px;border-radius:8px;font-family:monospace;font-size:11px;color:#00ff88">→ Gap: Docker, System Design (42% match)<br/>→ Labs: Lab-3B GPU free 19:00-22:00, Lab-1A free 20:00<br/>→ Alumni path: 3 placed via same labs [cite]</div></div>
+<div class="card" style="background:#0a0a0a;color:#fff"><h3 style="color:#00ff88">Killer Demo Q2 (Officer)</h3><p style="color:#ccc">“Which 25 students at risk next month & why?”</p><p class="small" style="color:#888">Genie queries Forecasting Agent over graph, visualises in AI/BI, drill-down via natural language</p><div style="margin-top:10px;background:#1a1a1a;padding:10px;border-radius:8px;font-family:monospace;font-size:11px;color:#00ff88">→ 25 at-risk (F1 0.81) — top reason: attendance &lt;75% + missing cloud labs<br/>→ Action: auto-queue lab slots + mentor nudge [Lakebase write]</div></div>
+</div>
+<p class="small" style="margin-top:16px">Pattern validated: OneTrust sharded 190 tables across Genie Agents; ShipBob 11 PM Ops Brief (supervisor + Genie as tool + 17 feeds) — Databricks 5th Genie Hackathon winners.</p>
+</div>
+
+<!-- SLIDE 6 DATA -->
+<div class="slide">
+<div class="label">Data — Responsibly generated synthetic + governed</div>
+<h2>7 datasets. 120k rows.<br/>Generated in 30 mins.</h2>
+<div class="bar"></div>
+<div class="grid3" style="margin-top:16px">
+<div class="card"><h3>📊 Synthetic Campus (via Assistant)</h3><p class="small">5k students, 800 faculty, 40 courses, 1.2k lab logs, 200 JDs (parsed by ai_extract), 3k placement records. Prompt: “generate 5k rows with schema…”</p></div>
+<div class="card"><h3>🏛️ Lab & Infra</h3><p class="small">Lab registers, room bookings, GPU/energy logs, timetable. Temporal constraints enforced.</p></div>
+<div class="card"><h3>🌐 City + Open</h3><p class="small">BMTC GTFS, internship feeds (data.gov.in) for campus→city opportunity link. OSM for lab map.</p></div>
+</div>
+<div class="card" style="margin-top:16px"><p class="small"><b>Governance:</b> Unity Catalog lineage + RBAC, Vector Search hybrid, Delta Lake bronze→gold. MLflow 3.0 traces every Genie answer for audit. No PII, synthetic only. Fits free-tier caps.</p></div>
+</div>
+
+<!-- SLIDE 7 IMPACT -->
+<div class="slide">
+<div class="label">Impact & 12-Hour Plan — Why PRISM gets shortlisted & wins</div>
+<h2>Useful today.<br/>Scalable to Finale.</h2>
+<div class="bar"></div>
+<div class="grid2" style="margin-top:16px">
+<div>
+<div style="display:flex;gap:12px">
+<div><p class="kpi accent">30%</p><p class="small">lab wastage cut via constraint-aware booking</p></div>
+<div><p class="kpi">3→30s</p><p class="small">query time: days of sheets → seconds via Genie</p></div>
+<div><p class="kpi">80%</p><p class="small">less manual report prep (officer view)</p></div>
+</div>
+<p style="margin-top:16px"><b>Grand Finale scalability:</b> Ward Zero (BMSCE) → 198 wards pattern from city twin paper. Same lakehouse scales to PESU finale.</p>
+<p class="small" style="margin-top:8px"><b>Judging fit:</b> Technical Complexity (GraphRAG+Supervisor), Usefulness (clear 3 users + journey), Genie at core (sharded agents + overlay), Databricks depth (5 new free products).</p>
+</div>
+<div class="card">
+<h3>12-Hour Build</h3>
+<p class="small"><b>0-2h</b> Lakeflow + synthetic gen (Assistant)<br/><b>2-4h</b> Vector Search + Graph<br/><b>4-7h</b> Agent Bricks Supervisor (3 agents)<br/><b>7-9h</b> AI/BI Dashboard + Lakebase + MCP<br/><b>9-12h</b> MLflow eval + 2-min video + pitch</p>
+<p class="small" style="margin-top:10px;background:#FFF3F0;padding:8px;border-radius:8px">Deadline: Tonight 11:59 PM · Team 3-5 · Offline at BMSCE · Free Edition mandatory</p>
+</div>
+</div>
+<div style="position:absolute;bottom:32px;left:56px;right:56px;border-top:1px solid #eee;padding-top:12px;display:flex;justify-content:space-between">
+<p class="small"><b>Team Ward Zero</b> · prism@wardzero.in · Ready for Hackathon Day</p><p class="small accent" style="font-weight:700">Build with Databricks. Build for the Real World.</p>
+</div>
+</div>
+
+</body></html>

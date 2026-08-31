@@ -1,0 +1,175 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><title>PRISM — Cartesia STT → Genie → Rumik Mulberry</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:Inter,system-ui,sans-serif;background:#0a0a0a;color:#fff;min-height:100vh}
+.header{padding:24px 32px;border-bottom:1px solid #1a1a1a;display:flex;align-items:center;justify-content:space-between}
+.header h1{font-size:22px;font-weight:700;background:linear-gradient(90deg,#818cf8,#c084fc);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.header .tag{font-size:11px;background:#1a1a1a;color:#818cf8;padding:4px 12px;border-radius:999px;border:1px solid #2a2a2a}
+.container{max-width:720px;margin:0 auto;padding:32px 24px}
+.card{background:#131313;border:1px solid #1f1f1f;border-radius:16px;padding:24px;margin-bottom:20px}
+.card h2{font-size:16px;font-weight:600;margin-bottom:16px;color:#e5e5e5}
+.mic-area{display:flex;flex-direction:column;align-items:center;padding:32px 0}
+.mic-btn{width:96px;height:96px;border-radius:50%;border:3px solid #2a2a2a;background:#1a1a1a;color:#fff;font-size:36px;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center}
+.mic-btn:hover{border-color:#444;background:#222}
+.mic-btn.listening{background:#dc2626;border-color:#dc2626;animation:pulse 1.2s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(220,38,38,.5)}70%{box-shadow:0 0 0 20px rgba(220,38,38,0)}100%{box-shadow:0 0 0 0 rgba(220,38,38,0)}}
+.mic-status{font-size:13px;color:#666;margin-top:12px;min-height:20px}
+.mic-status.active{color:#dc2626}
+.mic-status.success{color:#22c55e}
+.log-box{background:#0a0a0a;border:1px solid #1f1f1f;border-radius:12px;padding:16px;min-height:160px;max-height:320px;overflow-y:auto;font-size:13px;line-height:1.7}
+.log-box .msg{margin-bottom:6px}
+.log-box .you{color:#818cf8}
+.log-box .genie{color:#22c55e}
+.log-box .stt{color:#f59e0b}
+.log-box .rumik{color:#c084fc}
+.log-box .error{color:#dc2626}
+.log-box .time{color:#444;font-size:11px}
+.result-box{display:none}
+.result-box.show{display:block}
+.result-box .answer{background:#131313;border:1px solid #1f1f1f;border-radius:12px;padding:16px;margin-top:12px;font-size:14px;line-height:1.6}
+.audio-player{margin-top:12px;display:none}
+.audio-player.show{display:block}
+.btn-row{display:flex;gap:12px;justify-content:center;margin-top:24px}
+.btn-sm{padding:10px 20px;border-radius:999px;border:1px solid #2a2a2a;background:#131313;color:#ccc;font-size:13px;cursor:pointer;transition:all .2s}
+.btn-sm:hover{background:#1a1a1a;border-color:#444}
+.btn-sm.primary{background:#818cf8;color:#fff;border-color:#818cf8}
+.btn-sm.primary:hover{background:#6366f1}
+.footer{text-align:center;padding:32px;color:#333;font-size:12px}
+.footer a{color:#818cf8}
+</style></head>
+<body>
+<div class="header">
+  <h1>✦ PRISM</h1>
+  <span class="tag">Cartesia STT → Genie → Rumik Mulberry 1.5</span>
+</div>
+<div class="container">
+  <div class="card">
+    <h2>🎙️ Voice Chat</h2>
+    <div class="mic-area">
+      <button class="mic-btn" id="micBtn">🎙️</button>
+      <div class="mic-status" id="micStatus">Tap to speak</div>
+      <div class="btn-row">
+        <button class="btn-sm" id="resetBtn">↻ Reset</button>
+        <button class="btn-sm primary" id="tryBtn">Try: "What is the distribution of customer gender?"</button>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <h2>📋 Transcript</h2>
+    <div class="log-box" id="logBox">
+      <div class="msg time">-- waiting --</div>
+    </div>
+    <div class="result-box" id="resultBox">
+      <div class="answer" id="answerBox"></div>
+    </div>
+    <audio id="player" class="audio-player" controls></audio>
+  </div>
+</div>
+<div class="footer">PRISM Demo · Cartesia STT + Genie + Rumik TTS · <a href="http://localhost:8001" target="_blank">Server</a></div>
+
+<script>
+const btn=document.getElementById('micBtn'), status=document.getElementById('micStatus'), logBox=document.getElementById('logBox'), player=document.getElementById('player');
+const resultBox=document.getElementById('resultBox'), answerBox=document.getElementById('answerBox');
+let listening=false, stream, rec, timer;
+
+function addLog(cls,text){
+  const d=document.createElement('div'); d.className='msg '+cls;
+  d.innerHTML=text; logBox.appendChild(d); logBox.scrollTop=logBox.scrollHeight;
+}
+function setStatus(txt,cls){status.textContent=txt;status.className='mic-status'+(cls?' '+cls:'')}
+
+async function askGenie(text){
+  addLog('stt',`<span class="time">[${new Date().toLocaleTimeString()}]</span> 🎤 STT: "${text}"`);
+  const r=await fetch("http://localhost:8001/api/genie",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({question:text})});
+  const j=await r.json(); return j.answer||j.error||"No answer";
+}
+async function speakRumik(text){
+  const r=await fetch("http://localhost:8001/api/tts/cartesia",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({text})});
+  if(!r.ok) return null;
+  const blob=await r.blob(); const url=URL.createObjectURL(blob);
+  player.src=url; player.classList.add('show'); player.play();
+  return blob;
+}
+
+function startListening(){
+  if(listening)return;
+  listening=true;
+  btn.classList.add('listening');
+  setStatus('🔴 Listening... speak now','active');
+  addLog('','<div class="msg" style="color:#dc2626">[START] 🎤 Listening... (auto-stops after 5s)</div>');
+  
+  navigator.mediaDevices.getUserMedia({audio:true}).then(s=>{
+    stream=s;
+    rec=new MediaRecorder(s,{mimeType:"audio/webm;codecs=opus"});
+    const chunks=[];
+    rec.ondataavailable=e=>{if(e.data.size>0)chunks.push(e.data)};
+    rec.onstop=async()=>{
+      try{
+        const blob=new Blob(chunks,{type:"audio/webm;codecs=opus"});
+        const reader=new FileReader();
+        reader.onloadend=async()=>{
+          const b64=reader.result.split(',')[1];
+          if(!b64||b64.length<100){setStatus('⚠️ No audio captured, try again','');btn.classList.remove('listening');listening=false;return;}
+          setStatus('🧠 Processing...','active');
+          const r=await fetch("http://localhost:8001/api/stt/cartesia",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({audio_base64:b64})});
+          const j=await r.json();
+          const transcript=j.text||"No transcription";
+          if(transcript&&transcript!=="I couldn't hear anything. Try again."){
+            const ans=await askGenie(transcript);
+            addLog('genie',`<span class="time">[${new Date().toLocaleTimeString()}]</span> 🤖 <b>Genie:</b> ${ans}`);
+            await speakRumik(ans);
+            addLog('rumik',`<span class="time">[${new Date().toLocaleTimeString()}]</span> 🔊 Rumik speaking...`);
+            answerBox.textContent=ans;
+            resultBox.classList.add('show');
+          } else {
+            addLog('error',`<span class="time">[${new Date().toLocaleTimeString()}]</span> ❌ STT: "${transcript}" — try speaking clearly`);
+          }
+          setStatus('✅ Done — tap to speak again','success');
+          setTimeout(()=>{setStatus('Tap to speak','');btn.classList.remove('listening');listening=false;},3000);
+        };
+        reader.readAsDataURL(blob);
+      }catch(e){
+        addLog('error',`<span class="time">[${new Date().toLocaleTimeString()}]</span> ❌ ${e.message}`);
+        setStatus('❌ Error, tap to retry','');
+        btn.classList.remove('listening');listening=false;
+      }
+    };
+    rec.start();
+    // Auto-stop after 5 seconds
+    timer=setTimeout(()=>{if(listening&&rec&&rec.state!=="inactive"){rec.stop();}},5000);
+  }).catch(e=>{
+    addLog('error',`<span class="time">[${new Date().toLocaleTimeString()}]</span> ❌ Mic denied: ${e.message}`);
+    setStatus('❌ Mic denied — allow microphone','error');
+    listening=false;btn.classList.remove('listening');
+  });
+}
+
+function stopListening(){
+  if(!listening)return;
+  clearTimeout(timer);
+  if(rec&&rec.state!=="inactive")rec.stop();
+  if(stream)stream.getTracks().forEach(t=>t.stop());
+  btn.classList.remove('listening');
+  setStatus('⏳ Processing...','active');
+}
+
+btn.addEventListener('click',()=>{
+  if(listening) stopListening(); else startListening();
+});
+
+document.getElementById('resetBtn').addEventListener('click',()=>{
+  logBox.innerHTML='<div class="msg time">-- reset --</div>';
+  resultBox.classList.remove('show');player.classList.remove('show');player.src='';
+  setStatus('Tap to speak','');btn.classList.remove('listening');listening=false;
+});
+
+document.getElementById('tryBtn').addEventListener('click',async()=>{
+  addLog('','<div class="msg" style="color:#818cf8">[AUTO] "What is the distribution of customer gender?"</div>');
+  const ans=await askGenie("What is the distribution of customer gender?");
+  addLog('genie',`<span class="time">[${new Date().toLocaleTimeString()}]</span> 🤖 <b>Genie:</b> ${ans}`);
+  await speakRumik(ans);
+  addLog('rumik',`<span class="time">[${new Date().toLocaleTimeString()}]</span> 🔊 Rumik speaking...`);
+  answerBox.textContent=ans;resultBox.classList.add('show');
+});
+</script>
+</body></html>

@@ -1,0 +1,9 @@
+{
+  "name": "Genie-Labs",
+  "tables": ["prism.gold.labs", "prism.gold.bookings", "prism.app.bookings"],
+  "instructions": "You are the Labs agent. Only say 'free' if prism.gold.is_lab_free(lab_id, ts) = true. Respect 19:00-22:00 window. Use Lakebase table for live bookings.",
+  "examples": [
+    {"q": "Which GPU labs free tonight?", "sql": "SELECT lab_id FROM prism.gold.labs WHERE gpu=true AND prism.gold.is_lab_free(lab_id, now())"},
+    {"q": "Is Lab 3B free at 7pm?", "sql": "SELECT prism.gold.is_lab_free('LAB-3B', timestamp('2026-09-01 19:00:00'))"}
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "name": "Genie-Skills",
+  "tables": ["prism.gold.students", "prism.gold.jds", "prism.gold.skills_graph"],
+  "instructions": "You are the Skills agent. At-risk = cgpa < 6.5 AND attendance < 75 AND size(missing_skills) > 2. Always cite skill->course->lab path from prism.gold.skills_graph. Never hallucinate a lab.",
+  "examples": [
+    {"q": "Who is at-risk for Infosys?", "sql": "SELECT student_id, array_except(parse_jd_skills('Infosys'), skills) as missing FROM prism.gold.students WHERE cgpa < 6.5"},
+    {"q": "What skills am I missing for Infosys?", "sql": "SELECT array_except((SELECT parsed.skills FROM prism.gold.jds WHERE company='Infosys'), (SELECT skills FROM prism.gold.students WHERE student_id=current_user()))"}
+  ]
+}
