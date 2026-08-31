@@ -1,12 +1,17 @@
 import { View, Text, Pressable, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useVoice } from './hooks/useVoice';
+import * as Clipboard from 'expo-clipboard';
+import { getLogs, captureGlobalErrors, log } from './services/logger';
+import { useEffect, useState } from 'react';
 
 export default function App() {
   const { state, transcript, answer, error, start, stop, reset } = useVoice();
   const listening = state === 'listening';
   const processing = state === 'processing';
   const speaking = state === 'speaking';
+  const [copied, setCopied] = useState(false);
+  useEffect(() => { captureGlobalErrors(); log('App started'); }, []);
 
   return (
     <View style={s.container}>
@@ -59,6 +64,18 @@ export default function App() {
         </View>
 
         <Text style={s.footer}>PRISM • Your campus, answered.</Text>
+        <Pressable
+          onPress={async () => {
+            const txt = getLogs() + `\n---\nError: ${error || 'none'}\nState: ${state}\nTranscript: ${transcript}\nAnswer: ${answer}`;
+            await Clipboard.setStringAsync(txt);
+            log('Logs copied');
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+          }}
+          style={[s.btn, { marginTop: 12, alignSelf: 'center' }]}
+        >
+          <Text style={s.btnText}>{copied ? '✓ Copied' : 'Copy debug logs'}</Text>
+        </Pressable>
       </ScrollView>
     </View>
   );
