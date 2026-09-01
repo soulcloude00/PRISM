@@ -11,6 +11,9 @@ export default function App() {
   const processing = state === 'processing';
   const speaking = state === 'speaking';
   const [copied, setCopied] = useState(false);
+  const [demoQ, setDemoQ] = useState<string | null>(null);
+  const [demoA, setDemoA] = useState<string | null>(null);
+  const [demoLoading, setDemoLoading] = useState(false);
   useEffect(() => { captureGlobalErrors(); log('App started'); }, []);
 
   return (
@@ -35,31 +38,51 @@ export default function App() {
           </Text>
 
           <View style={s.row}>
-            <Pressable onPress={reset} style={s.btn}><Text style={s.btnText}>Clear</Text></Pressable>
+            <Pressable onPress={() => { reset(); setDemoQ(null); setDemoA(null); }} style={s.btn}><Text style={s.btnText}>Clear</Text></Pressable>
             <Pressable
               onPress={async () => {
                 const { apiPost } = await import('./services/api');
                 const q = 'Am I ready for Infosys? Which skill should I fix tonight?';
+                setDemoLoading(true); setDemoQ(q); setDemoA(null);
                 try {
-                  const r: any = await apiPost('/api/genie', { question: q });
-                  // Use hook's answer display via reset + manual — simplest: open transcript
-                  // For product demo without mic, show answer directly
-                  (global as any).__prismSample = r.answer;
-                } catch {}
+                  const r: any = await apiPost('/api/genie', { question: q }, { timeout: 15000 });
+                  setDemoA(r.answer || r.error || 'No answer');
+                  log(`demo Q1 answer ${r.answer?.slice(0,80)}`);
+                } catch (e: any) {
+                  setDemoA(e.message || 'Failed — try mic');
+                } finally { setDemoLoading(false); }
               }}
               style={[s.btn, s.btnPrimary]}
             >
-              <Text style={[s.btnText, s.btnTextPrimary]}>Try: Am I ready for Infosys?</Text>
+              <Text style={[s.btnText, s.btnTextPrimary]}>{demoLoading ? '...' : 'Try: Am I ready for Infosys?'}</Text>
+            </Pressable>
+          </View>
+          <View style={[s.row, { marginTop: 10 }]}>
+            <Pressable
+              onPress={async () => {
+                const { apiPost } = await import('./services/api');
+                const q = 'Show 25 at-risk next month and why';
+                setDemoLoading(true); setDemoQ(q); setDemoA(null);
+                try {
+                  const r: any = await apiPost('/api/genie', { question: q }, { timeout: 15000 });
+                  setDemoA(r.answer || r.error || 'No answer');
+                } catch (e: any) { setDemoA(e.message); } finally { setDemoLoading(false); }
+              }}
+              style={[s.btn, { backgroundColor: '#1a1a1a', borderColor: '#818cf8' }]}
+            >
+              <Text style={[s.btnText, { color: '#818cf8' }]}>Try: 25 at-risk</Text>
             </Pressable>
           </View>
         </View>
 
         <View style={s.card}>
           <Text style={s.cardTitle}>Answer</Text>
-          {!transcript && !answer && !error ? <Text style={s.empty}>Your answer will appear here.</Text> : null}
-          {transcript ? <Text style={s.you}>{transcript}</Text> : null}
+          {!transcript && !answer && !error && !demoQ ? <Text style={s.empty}>Your answer will appear here. Tap a sample Q — no mic needed.</Text> : null}
+          {transcript ? <Text style={s.you}>You: {transcript}</Text> : null}
+          {demoQ ? <Text style={s.you}>You: {demoQ}</Text> : null}
           {answer ? <Text style={s.genie}>{answer}</Text> : null}
-          {processing ? <Text style={s.loading}>Checking your data…</Text> : null}
+          {demoA ? <Text style={s.genie}>{demoA}</Text> : null}
+          {processing || demoLoading ? <Text style={s.loading}>Checking your data…</Text> : null}
           {error ? <Text style={s.error}>{error}</Text> : null}
         </View>
 

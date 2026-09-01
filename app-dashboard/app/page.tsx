@@ -6,10 +6,12 @@ export default function Page(){
   async function ask(text:string){
     const qq=text||q; if(!qq) return; setLoading(true); setLog(l=>[...l,{role:"you",text:qq}]);
     const r=await fetch("http://localhost:8001/api/genie",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({question:qq})});
-    const j=await r.json(); const ans=j.answer||j.error; setLog(l=>[...l,{role:"genie",text:ans}]);
-    // Rumik TTS
-    const t=await fetch("http://localhost:8001/api/tts/rumik",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({text:ans})});
-    if(t.ok){ const b=await t.blob(); const url=URL.createObjectURL(b); (document.getElementById("player") as HTMLAudioElement).src=url; (document.getElementById("player") as HTMLAudioElement).play(); }
+    const j=await r.json(); const ans=j.answer||j.error; setLog(l=>[...l,{role:"genie",text:ans + (j.mock ? " · (offline demo)" : "") + (j.sql ? ` — ${j.sql.slice(0,80)}` : "")}]);
+    // Cartesia TTS (sonic-3.6 50bbd3dd) — text fallback if busy
+    try {
+      const t=await fetch("http://localhost:8001/api/tts/cartesia",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({text:ans.slice(0,500)})});
+      if(t.ok){ const b=await t.blob(); const url=URL.createObjectURL(b); const el=document.getElementById("player") as HTMLAudioElement; if(el){ el.src=url; el.classList.remove("hidden"); el.play().catch(()=>{}); } }
+    } catch {}
     setLoading(false); setQ("");
   }
   async function startMic(){
@@ -37,7 +39,7 @@ export default function Page(){
     <div className="min-h-screen">
       <header className="sticky top-0 bg-white border-b px-6 py-3 flex justify-between items-center">
         <div className="font-bold">PRISM <span className="font-normal text-neutral-500">by Prometheus — Your campus, answered.</span></div>
-        <div className="text-xs text-neutral-500">BMSCE · Genie + Cartesia STT → Rumik Mulberry 1.5</div>
+        <div className="text-xs text-neutral-500">BMSCE · Genie + Cartesia STT/TTS sonic-3.6</div>
       </header>
       <div className="max-w-6xl mx-auto p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-4">
@@ -67,7 +69,7 @@ export default function Page(){
           </div>
           <div className="bg-white border rounded-xl p-4">
             <div className="text-sm font-semibold">How it works</div>
-            <div className="text-xs text-neutral-600 mt-2">Cartesia STT (mic) → Genie (3 sharded agents + Supervisor, 151/149 proven) → Rumik Silk Mulberry 1.5 (Indian warm voice). Lakehouse + Lakebase inside.</div>
+            <div className="text-xs text-neutral-600 mt-2">Cartesia STT/TTS (sonic-3.6) → Genie (3 sharded agents + Supervisor) → Lakebase booking. Mock fallback keeps demo alive offline.</div>
           </div>
         </div>
       </div>

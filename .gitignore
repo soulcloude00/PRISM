@@ -13,3 +13,4 @@ dist/
 .DS_Store
 # Expo
 .expo-shared/
+app-expo/metro.config.js.bak
