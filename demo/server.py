@@ -18,18 +18,23 @@ CORS(app)
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 log = logging.getLogger("prism")
 
-# Env — never hardcode in bundle, proxy via server
-CARTESIA_KEY = os.getenv("CARTESIA_API_KEY", "YOUR_CARTESIA_API_KEY_REDACTED")
-DATABRICKS_HOST = os.getenv("DATABRICKS_HOST", "https://dbc-42ea286b-3fd9.cloud.databricks.com")
-DATABRICKS_TOKEN = os.getenv("DATABRICKS_TOKEN", "YOUR_DATABRICKS_TOKEN_REDACTED")
-GENIE_SPACE_ID = os.getenv("GENIE_SPACE_ID", "YOUR_GENIE_SPACE_ID_REDACTED")
+# Env — never hardcode secrets, all via .env (see .env.example)
+CARTESIA_KEY = os.getenv("CARTESIA_API_KEY", "")
+DATABRICKS_HOST = os.getenv("DATABRICKS_HOST", "")
+DATABRICKS_TOKEN = os.getenv("DATABRICKS_TOKEN", "")
+GENIE_SPACE_ID = os.getenv("GENIE_SPACE_ID", "")
 PORT = int(os.getenv("PORT", "8001"))
 DEMO_MODE = os.getenv("DEMO_MODE", "false").lower() in ("1", "true", "yes")
 
-# Fail loud if missing in production
+# Demo mode needs no keys — real mode warns if missing so judges see why mock fires
+if not DEMO_MODE and not CARTESIA_KEY:
+    log.warning("CARTESIA_API_KEY not set — STT/TTS will fail. Set in demo/.env or use DEMO_MODE=true")
+if not DEMO_MODE and (not DATABRICKS_HOST or not DATABRICKS_TOKEN or not GENIE_SPACE_ID):
+    log.warning("Databricks env missing — Genie will use mock fallback. Set DATABRICKS_HOST/TOKEN/GENIE_SPACE_ID or use DEMO_MODE=true")
+
 if os.getenv("RENDER") or os.getenv("FLY_APP_NAME"):
-    if CARTESIA_KEY.startswith("sk_car_") and os.getenv("CARTESIA_API_KEY") is None:
-        log.warning("CARTESIA_API_KEY not set in production env — using fallback (rotate soon)")
+    if not CARTESIA_KEY:
+        log.warning("CARTESIA_API_KEY not set in production")
 
 MOCK_ANSWERS = {
     "infosys": "Gap: Docker, System Design (42% match). Fix: Cloud Lab Module 4 (2h) → Book Lab 3B free 19:00-22:00. Proof: 3 seniors placed via same path. [prism.gold.skills_graph: Docker->Cloud Lab 4->Lab 3B->Infosys]",
