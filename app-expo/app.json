@@ -6,19 +6,53 @@
     "orientation": "portrait",
     "scheme": "prism",
     "userInterfaceStyle": "dark",
-    "splash": { "backgroundColor": "#0a0a0a", "resizeMode": "contain" },
-    "assetBundlePatterns": ["**/*"],
-    "ios": { "supportsTablet": true, "bundleIdentifier": "com.prism.expo" },
+    "splash": {
+      "backgroundColor": "#0a0a0a",
+      "resizeMode": "contain"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.prism.expo",
+      "jsEngine": "hermes"
+    },
     "android": {
       "package": "com.prism.expo",
-      "adaptiveIcon": { "backgroundColor": "#0a0a0a" },
-      "permissions": ["android.permission.RECORD_AUDIO", "android.permission.CAMERA", "android.permission.POST_NOTIFICATIONS"]
+      "adaptiveIcon": {
+        "backgroundColor": "#0a0a0a"
+      },
+      "permissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.CAMERA",
+        "android.permission.POST_NOTIFICATIONS"
+      ],
+      "jsEngine": "hermes"
     },
     "plugins": [
-      ["expo-av", { "microphonePermission": "Allow PRISM to listen for your voice questions." }],
-      ["expo-camera", { "cameraPermission": "Allow PRISM to scan notes." }],
-      ["expo-notifications", { "color": "#818cf8" }]
+      [
+        "expo-av",
+        {
+          "microphonePermission": "Allow PRISM to listen for your voice questions."
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow PRISM to scan notes."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "color": "#818cf8"
+        }
+      ]
     ],
-    "extra": { "apiUrl": "http://10.71.30.250:8001" }
+    "extra": {
+      "apiUrl": "http://10.80.5.238:8001"
+    },
+    "jsEngine": "hermes"
   }
 }
